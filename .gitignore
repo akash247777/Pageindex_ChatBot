@@ -1,0 +1,16 @@
+# Environment files
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# OS / Editor files
+.DS_Store
+.vscode/
