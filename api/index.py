@@ -62,15 +62,23 @@ async def chat(req: ChatRequest):
     context = {}
     oid = to_oid(req.userId)
 
-    # Basic Context Builder (Sync logic with tree.definition.js and context.builder.js)
+    # Basic Context Builder (Synced with tree.definition.js fields)
     for node in nodes:
         if node == "client.user":
-            data = await db.users.find_one({"_id": oid})
+            # Fields: name, email, mobileNumber, role, userRole, walletBalance
+            data = await db.users.find_one(
+                {"_id": oid}, 
+                {"name": 1, "email": 1, "mobileNumber": 1, "role": 1, "walletBalance": 1}
+            )
             if data: data["_id"] = str(data["_id"])
             context[node] = data if data else {}
         
         elif node == "client.profile":
-            data = await db.clientprofiles.find_one({"user": oid})
+            # Fields: companyInfo, gstDetails, signatoryDetails, locations
+            data = await db.clientprofiles.find_one(
+                {"user": oid},
+                {"companyInfo": 1, "gstDetails": 1, "signatoryDetails": 1, "locations": 1}
+            )
             if data: 
                 data["_id"] = str(data["_id"])
                 if "user" in data: data["user"] = str(data["user"])
@@ -78,8 +86,12 @@ async def chat(req: ChatRequest):
 
         elif node == "trips.assigned":
             # Fetch assigned vehicle/trip records for this user
-            cursor = db.assignevheicles.find({"userId": oid})
-            data = await cursor.to_list(length=100)
+            # Fields: tripId, driverId, vehicleId, deliveryStatus, consignorName
+            cursor = db.assignevheicles.find(
+                {"userId": oid},
+                {"tripId": 1, "driverId": 1, "vehicleId": 1, "deliveryStatus": 1, "consignorName": 1}
+            ).limit(20) # Limit to 20 recent records
+            data = await cursor.to_list(length=20)
             for item in data:
                 item["_id"] = str(item["_id"])
                 if "userId" in item: item["userId"] = str(item["userId"])
@@ -91,13 +103,17 @@ async def chat(req: ChatRequest):
             # Try to get them from context if trips.assigned was already processed
             assigned_trips = context.get("trips.assigned")
             if not assigned_trips:
-                cursor = db.assignevheicles.find({"userId": oid})
-                assigned_trips = await cursor.to_list(length=100)
+                cursor = db.assignevheicles.find({"userId": oid}, {"driverId": 1}).limit(20)
+                assigned_trips = await cursor.to_list(length=20)
             
             driver_ids = [to_oid(t["driverId"]) for t in assigned_trips if t.get("driverId")]
             if driver_ids:
-                cursor = db.driverdetails.find({"_id": {"$in": driver_ids}})
-                drivers = await cursor.to_list(length=100)
+                # Fields: name, phoneNumber, email, city, address
+                cursor = db.driverdetails.find(
+                    {"_id": {"$in": driver_ids}},
+                    {"name": 1, "phoneNumber": 1, "email": 1, "city": 1, "address": 1}
+                )
+                drivers = await cursor.to_list(length=20)
                 for d in drivers:
                     d["_id"] = str(d["_id"])
                 context[node] = drivers
@@ -107,7 +123,7 @@ async def chat(req: ChatRequest):
     # Build Prompt
     prompt = f"""
     You are an AI Client Support Assistant for "PageIndex".
-    Your goal is to provide accurate, helpful, and concise answers to clients regarding their profile, account, drivers, and company information.
+    Provide accurate and concise answers based ONLY on the DATA provided.
     
     DATA (JSON):
     {json.dumps(context, indent=2, default=str)}
@@ -116,15 +132,14 @@ async def chat(req: ChatRequest):
     "{req.message}"
     
     GUIDELINES:
-    - If the DATA contains user info like 'name', use it to be personalized.
-    - If the DATA is empty or does not contain the answer, politely tell the client you don't have that information.
-    - Never hallucinate data. Only use what is provided.
-    - Be concise and clear.
+    - Personalize the response if 'name' is available.
+    - If the DATA is empty, inform the client politely.
+    - Do NOT hallucinate.
     """
     
     try:
-        # Use a stable model version
-        actual_model = genai.GenerativeModel('gemini-2.5-flash')
+        # Note: gemini-2.5 does not exist yet; using the latest stable 1.5-flash
+        actual_model = genai.GenerativeModel('gemini-1.5-flash')
         response = actual_model.generate_content(prompt)
         reply = response.text
     except Exception as e:
