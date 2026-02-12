@@ -62,7 +62,7 @@ async def chat(req: ChatRequest):
     context = {}
     oid = to_oid(req.userId)
 
-    # Basic Context Builder (Sync logic with tree.definition.js)
+    # Basic Context Builder (Sync logic with tree.definition.js and context.builder.js)
     for node in nodes:
         if node == "client.user":
             data = await db.users.find_one({"_id": oid})
@@ -70,12 +70,39 @@ async def chat(req: ChatRequest):
             context[node] = data if data else {}
         
         elif node == "client.profile":
-            # In your tree.definition, client.profile queryKey is "user"
             data = await db.clientprofiles.find_one({"user": oid})
             if data: 
                 data["_id"] = str(data["_id"])
                 if "user" in data: data["user"] = str(data["user"])
             context[node] = data if data else {}
+
+        elif node == "trips.assigned":
+            # Fetch assigned vehicle/trip records for this user
+            cursor = db.assignevheicles.find({"userId": oid})
+            data = await cursor.to_list(length=100)
+            for item in data:
+                item["_id"] = str(item["_id"])
+                if "userId" in item: item["userId"] = str(item["userId"])
+                if "driverId" in item: item["driverId"] = str(item["driverId"])
+            context[node] = data
+            
+        elif node == "trips.drivers":
+            # We need to find drivers associated with the user's assigned vehicles
+            # Try to get them from context if trips.assigned was already processed
+            assigned_trips = context.get("trips.assigned")
+            if not assigned_trips:
+                cursor = db.assignevheicles.find({"userId": oid})
+                assigned_trips = await cursor.to_list(length=100)
+            
+            driver_ids = [to_oid(t["driverId"]) for t in assigned_trips if t.get("driverId")]
+            if driver_ids:
+                cursor = db.driverdetails.find({"_id": {"$in": driver_ids}})
+                drivers = await cursor.to_list(length=100)
+                for d in drivers:
+                    d["_id"] = str(d["_id"])
+                context[node] = drivers
+            else:
+                context[node] = []
 
     # Build Prompt
     prompt = f"""
