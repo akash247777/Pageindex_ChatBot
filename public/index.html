@@ -1,29 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Support Assistant</title>
+    <title>Client Support Assistant — PageIndex</title>
+    <meta name="description"
+        content="PageIndex Client Support AI Chatbot for managing trips, tracking, billing, and company profile.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
             --primary-hover: #4f46e5;
-            --bg-dark: #0f172a;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --accent: #a78bfa;
+            --bg-dark: #0b0f1a;
+            --bg-surface: #111827;
             --card-bg: #1e293b;
-            --text-main: #f8fafc;
+            --text-main: #f1f5f9;
             --text-muted: #94a3b8;
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --text-dim: #64748b;
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(99, 102, 241, 0.5);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
@@ -35,273 +47,570 @@
             overflow: hidden;
         }
 
+        /* ── Header ── */
         header {
-            padding: 1.5rem 2rem;
+            padding: 1rem 1.5rem;
             background: var(--glass);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: white;
+            flex-shrink: 0;
         }
 
         .header-title h1 {
-            font-size: 1.25rem;
+            font-size: 1.125rem;
             font-weight: 600;
             background: linear-gradient(135deg, #818cf8, #c084fc);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1.2;
         }
 
-        .driver-config {
+        .header-title span {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        .user-config {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.5rem;
             align-items: center;
         }
 
-        .driver-config label {
-            font-size: 0.875rem;
+        .user-config label {
+            font-size: 0.8rem;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
-        .driver-config input {
-            background: var(--card-bg);
+        .user-config input {
+            background: var(--bg-surface);
             border: 1px solid var(--border);
-            color: white;
-            padding: 0.4rem 0.8rem;
+            color: var(--text-main);
+            padding: 0.4rem 0.75rem;
             border-radius: 8px;
-            font-size: 0.875rem;
-            width: 100px;
-            transition: border-color 0.2s;
+            font-size: 0.8rem;
+            width: 200px;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
         }
 
-        .driver-config input:focus {
+        .user-config input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--border-active);
+            box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
+        /* ── Chat Container ── */
         #chat-container {
             flex: 1;
-            padding: 2rem;
+            padding: 1.5rem 2rem;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1rem;
             scroll-behavior: smooth;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(167, 139, 250, 0.03) 0%, transparent 50%);
         }
 
+        /* ── Messages ── */
         .message {
-            max-width: 80%;
-            padding: 1rem 1.25rem;
+            max-width: 75%;
+            padding: 0.875rem 1.125rem;
             border-radius: 16px;
-            font-size: 1rem;
-            line-height: 1.5;
-            animation: fadeIn 0.3s ease-out forwards;
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .user-message {
             align-self: flex-end;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
             color: white;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.2);
         }
 
         .ai-message {
             align-self: flex-start;
             background: var(--card-bg);
             color: var(--text-main);
-            border-bottom-left-radius: 4px;
+            border-bottom-left-radius: 6px;
             border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
         .ai-message code {
-            background: rgba(0,0,0,0.3);
-            padding: 0.2rem 0.4rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.15rem 0.4rem;
             border-radius: 4px;
-            font-family: monospace;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85em;
         }
 
+        .welcome-message {
+            opacity: 1;
+            animation: none;
+        }
+
+        .welcome-message strong {
+            color: var(--accent);
+        }
+
+        /* ── Timestamp ── */
+        .message-time {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.375rem;
+            text-align: right;
+        }
+
+        .ai-message .message-time {
+            text-align: left;
+        }
+
+        /* ── Footer / Input ── */
         footer {
-            padding: 2rem;
-            background: linear-gradient(to top, var(--bg-dark), transparent);
+            padding: 1rem 1.5rem 1.25rem;
+            background: linear-gradient(to top, var(--bg-dark) 60%, transparent);
         }
 
         .input-wrapper {
             max-width: 800px;
             margin: 0 auto;
             position: relative;
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--bg-surface);
+            border-radius: 14px;
             border: 1px solid var(--border);
             display: flex;
-            padding: 0.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            align-items: center;
+            padding: 0.375rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--border-active);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 3px var(--primary-glow);
         }
 
         #message-input {
             flex: 1;
             background: transparent;
             border: none;
-            color: white;
+            color: var(--text-main);
             padding: 0.75rem 1rem;
-            font-size: 1rem;
+            font-size: 0.9375rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #message-input::placeholder {
+            color: var(--text-dim);
         }
 
         #message-input:focus {
             outline: none;
         }
 
+        .char-counter {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            padding: 0 0.75rem;
+            min-width: 55px;
+            text-align: right;
+            border-right: 1px solid var(--border);
+            margin-right: 0.5rem;
+            height: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .char-limit-reached {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
         #send-btn {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
             color: white;
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
             font-weight: 600;
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-family: 'Inter', sans-serif;
         }
 
         #send-btn:hover {
-            background: var(--primary-hover);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        #send-btn:active {
+            transform: translateY(0);
         }
 
         #send-btn:disabled {
-            background: var(--text-muted);
+            background: var(--text-dim);
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        /* Loading Dots */
+        .send-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ── Typing Indicator ── */
         .typing {
             display: flex;
-            gap: 4px;
+            gap: 5px;
+            padding: 0.25rem 0;
         }
+
         .dot {
             width: 8px;
             height: 8px;
-            background: var(--text-muted);
+            background: var(--accent);
             border-radius: 50%;
             animation: bounce 1.4s infinite ease-in-out both;
         }
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        .dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
 
         @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.4;
+            }
+
+            40% {
+                transform: scale(1.0);
+                opacity: 1;
+            }
         }
 
-        /* Custom Scrollbar */
+        /* ── Scrollbar ── */
         #chat-container::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
+
         #chat-container::-webkit-scrollbar-track {
             background: transparent;
         }
+
         #chat-container::-webkit-scrollbar-thumb {
             background: var(--border);
             border-radius: 10px;
         }
+
+        #chat-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+
+        /* ── Status Badge ── */
+        .status-badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-online {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--success);
+        }
+
+        .status-offline {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--danger);
+        }
+
+        /* ── Offline Banner ── */
+        .offline-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--danger);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .offline-banner.visible {
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            header {
+                flex-direction: column;
+                gap: 0.75rem;
+                padding: 1rem;
+            }
+
+            .user-config input {
+                width: 160px;
+            }
+
+            #chat-container {
+                padding: 1rem;
+            }
+
+            .message {
+                max-width: 90%;
+                font-size: 0.875rem;
+            }
+
+            footer {
+                padding: 0.75rem 1rem 1rem;
+            }
+        }
     </style>
 </head>
-<body>
-    <header>
+
+<div id="offline-banner" class="offline-banner">
+    ⚠️ No Internet Connection. Some features may be unavailable.
+</div>
+
+<header>
+    <div class="header-left">
+        <div class="header-logo">PI</div>
         <div class="header-title">
-            <h1>DriverSupport AI</h1>
+            <h1>ClientSupport AI</h1>
+            <span>PageIndex Logistics • <span id="status-badge" class="status-badge status-online">Online</span></span>
         </div>
-        <div class="driver-config">
-            <label for="driver-id">Driver ID:</label>
-            <input type="text" id="driver-id" value="DRV-001">
-        </div>
-    </header>
+    </div>
+    <div class="user-config">
+        <label for="user-id">User ID:</label>
+        <input type="text" id="user-id" placeholder="Enter your User ID" autocomplete="off">
+    </div>
+</header>
 
-    <main id="chat-container">
-        <div class="message ai-message">
-            Hello! I'm your support assistant. How can I help you today?
-        </div>
-    </main>
+<main id="chat-container">
+    <div class="message ai-message welcome-message">
+        👋 Hello! I'm your <strong>Client Support Assistant</strong>.<br><br>
+        How can I help you today?
+    </div>
+</main>
 
-    <footer>
-        <form class="input-wrapper" id="chat-form">
-            <input type="text" id="message-input" placeholder="Ask about your trips, rewards, or vehicle..." autocomplete="off">
-            <button type="submit" id="send-btn">Send</button>
-        </form>
-    </footer>
+<footer>
+    <form class="input-wrapper" id="chat-form">
+        <input type="text" id="message-input" placeholder="Add Message Here" autocomplete="off" maxlength="200">
+        <div id="char-count" class="char-counter">0 / 200</div>
+        <button type="submit" id="send-btn">
+            <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Send
+        </button>
+    </form>
+</footer>
 
-    <script>
-        const chatForm = document.getElementById('chat-form');
-        const messageInput = document.getElementById('message-input');
-        const chatContainer = document.getElementById('chat-container');
-        const driverInput = document.getElementById('driver-id');
-        const sendBtn = document.getElementById('send-btn');
+<script>
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const chatContainer = document.getElementById('chat-container');
+    const userIdInput = document.getElementById('user-id');
+    const sendBtn = document.getElementById('send-btn');
+    const statusBadge = document.getElementById('status-badge');
+    const offlineBanner = document.getElementById('offline-banner');
+    const charCount = document.getElementById('char-count');
 
-        const sessionId = 'session-' + Math.random().toString(36).substr(2, 9);
+    const sessionId = 'session-' + Math.random().toString(36).substr(2, 9);
 
-        function addMessage(text, isAi = false) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${isAi ? 'ai-message' : 'user-message'}`;
-            msgDiv.innerText = text;
-            chatContainer.appendChild(msgDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+    // ── Character Limit Handling ──
+    messageInput.addEventListener('input', () => {
+        const len = messageInput.value.length;
+        charCount.innerText = `${len} / 200`;
+
+        if (len >= 180) {
+            charCount.classList.add('char-limit-reached');
+        } else {
+            charCount.classList.remove('char-limit-reached');
         }
+    });
 
-        function addTypingIndicator() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message ai-message typing-indicator';
-            typingDiv.innerHTML = '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-            chatContainer.appendChild(typingDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return typingDiv;
-        }
-
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            const driverId = driverInput.value.trim();
-
-            if (!message) return;
-
-            addMessage(message, false);
-            messageInput.value = '';
-            
-            const typingIndicator = addTypingIndicator();
+    // ── Internet Connection Handling ──
+    function updateOnlineStatus() {
+        if (navigator.onLine) {
+            statusBadge.innerText = 'Online';
+            statusBadge.className = 'status-badge status-online';
+            offlineBanner.classList.remove('visible');
+            sendBtn.disabled = false;
+            messageInput.placeholder = 'Add Message Here';
+        } else {
+            statusBadge.innerText = 'Offline';
+            statusBadge.className = 'status-badge status-offline';
+            offlineBanner.classList.add('visible');
             sendBtn.disabled = true;
+            messageInput.placeholder = 'Waiting for connection...';
+        }
+    }
 
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message,
-                        driverId,
-                        sessionId
-                    })
-                });
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
 
-                const data = await response.json();
-                typingIndicator.remove();
+    function getTimeString() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 
-                if (data.reply) {
-                    addMessage(data.reply, true);
-                } else {
-                    addMessage("Sorry, I encountered an error processing your request.", true);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                typingIndicator.remove();
-                addMessage("Could not connect to the server.", true);
-            } finally {
-                sendBtn.disabled = false;
+    function addMessage(text, isAi = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${isAi ? 'ai-message' : 'user-message'}`;
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerText = text;
+
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
+        timeDiv.innerText = getTimeString();
+
+        msgDiv.appendChild(contentDiv);
+        msgDiv.appendChild(timeDiv);
+
+        chatContainer.appendChild(msgDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message ai-message typing-indicator';
+        typingDiv.innerHTML = '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return typingDiv;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!navigator.onLine) {
+            addMessage("You are currently offline. Please check your internet connection.", true);
+            return;
+        }
+
+        const message = messageInput.value.trim();
+        const userId = userIdInput.value.trim();
+
+        if (!message) return;
+
+        if (!userId) {
+            addMessage("Please enter your User ID in the header field first.", true);
+            userIdInput.focus();
+            return;
+        }
+
+        addMessage(message, false);
+        messageInput.value = '';
+        charCount.innerText = '0 / 200';
+        charCount.classList.remove('char-limit-reached');
+
+        const typingIndicator = addTypingIndicator();
+        sendBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message,
+                    userId,
+                    sessionId
+                })
+            });
+
+            const data = await response.json();
+            typingIndicator.remove();
+
+            if (data.reply) {
+                addMessage(data.reply, true);
+            } else if (data.error) {
+                addMessage("Sorry, something went wrong: " + data.error, true);
+            } else {
+                addMessage("Sorry, I encountered an error processing your request.", true);
             }
-        });
-    </script>
+        } catch (error) {
+            console.error('Error:', error);
+            typingIndicator.remove();
+            addMessage("Could not connect to the server. Please try again.", true);
+        } finally {
+            if (navigator.onLine) sendBtn.disabled = false;
+            messageInput.focus();
+        }
+    });
+
+    // Focus input on load
+    messageInput.focus();
+</script>
 </body>
+
 </html>

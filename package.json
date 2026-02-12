@@ -1,7 +1,7 @@
 {
-    "name": "pageindex-driver-chatbot",
+    "name": "pageindex-client-chatbot",
     "version": "1.0.0",
-    "description": "Driver ChatBot with PageIndex navigation",
+    "description": "Client ChatBot with PageIndex navigation",
     "main": "src/server.js",
     "type": "module",
     "scripts": {

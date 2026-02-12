@@ -1,60 +1,73 @@
 export const PAGEINDEX_TREE = {
     root: {
-        children: ["driver", "trips", "vehicle", "support"]
+        children: ["client", "trips", "support"]
     },
 
-    driver: {
-        children: ["driver.profile", "driver.sessions", "driver.rewards"]
+    // ── CLIENT CONTEXT ──
+    client: {
+        children: ["client.user", "client.profile"]
     },
 
-    "driver.profile": {
+    "client.user": {
+        collection: "users",
+        match: "userId",
+        queryKey: "_id",
+        fields: ["name", "email", "mobileNumber", "role", "userRole", "walletBalance"]
+    },
+
+    "client.profile": {
+        collection: "clientprofiles",
+        match: "userId",
+        queryKey: "user",
+        fields: [
+            "companyInfo",
+            "gstDetails",
+            "signatoryDetails",
+            "locations"
+        ]
+    },
+
+    // ── TRIP/DRIVER CONTEXT ──
+    trips: {
+        children: ["trips.assigned", "trips.drivers"]
+    },
+
+    "trips.assigned": {
+        collection: "assignevheicles",
+        match: "userId",
+        queryKey: "userId",
+        fields: [
+            "tripId",
+            "driverId",
+            "vehicleId",
+            "deliveryStatus",
+            "consignorName"
+        ]
+    },
+
+    "trips.drivers": {
         collection: "driverdetails",
         match: "driverId",
         queryKey: "_id",
-        fields: ["name", "phoneNumber", "city", "drivingLicenseExpiry"]
+        fields: ["name", "phoneNumber", "email", "city", "address"]
     },
 
-    "driver.sessions": {
-        collection: "sessions",
-        match: "driverId",
-        fields: ["sessionId", "lastActivity"]
-    },
-
-    "driver.rewards": {
-        collection: "rewards",
-        match: "driverId",
-        fields: ["rewardPoints", "rewardFor"]
-    },
-
-    trips: {
-        children: ["trips.assignment", "trips.start"]
-    },
-
-    "trips.assignment": {
-        collection: "assignevheicles",
-        match: "driverId",
-        fields: ["tripId", "deliveryStatus", "delayStatus", "pickupTime", "managerName", "managerNumber"]
-    },
-
-    "trips.start": {
-        collection: "tripstartdetails",
-        match: "driverId",
-        fields: ["driverAtPickupPoint", "completeLoadInStatus"]
-    },
-
+    // ── SUPPORT CONTEXT ──
     support: {
-        children: ["support.chat", "support.tickets"]
+        children: ["support.chat", "support.sessions"]
     },
 
     "support.chat": {
-        collection: "chats",
-        match: "sessionId",
+        collection: "ClientChats",
+        match: "userId",
+        queryKey: "user",
         fields: ["role", "message", "timestamp"]
     },
 
-    "support.tickets": {
-        collection: "tickets",
+    "support.sessions": {
+        collection: "sessions",
         match: "userId",
-        fields: ["ticketId", "status", "priority"]
+        queryKey: "userId",
+        fields: ["sessionId", "lastActivity", "userType"]
     }
 };

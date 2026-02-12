@@ -1,16 +1,13 @@
-import AssignVehicle from "../models/assignevheicles.model.js";
-import Vehicle from "../models/vehicledetails.model.js";
-
-export async function getActiveTripByDriver(driverId) {
-    return AssignVehicle.findOne({
-        driverId,
-        tripStarted: true
-    });
+export function logInfo(message, data = {}) {
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, Object.keys(data).length ? data : "");
 }
 
-export async function getVehicleNumber(vehicleId) {
-    const vehicle = await Vehicle.findById(vehicleId, {
-        vehicleNumber: 1
-    });
-    return vehicle?.vehicleNumber || null;
+export function logError(message, error = null) {
+    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error || "");
+}
+
+export function logDebug(message, data = {}) {
+    if (process.env.NODE_ENV === "development") {
+        console.log(`[DEBUG] ${new Date().toISOString()} - ${message}`, Object.keys(data).length ? data : "");
+    }
 }

@@ -2,28 +2,23 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const AssignVehiclesSchema = new Schema({
-    tripId: { type: String },
-    driverId: { type: Schema.Types.ObjectId, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "users" },
     vehicleId: { type: Schema.Types.ObjectId },
+    driverId: { type: Schema.Types.ObjectId, ref: "driverdetails" },
     vendorId: { type: Schema.Types.ObjectId },
-
-    tripStarted: { type: Boolean },
-    deliveryStatus: { type: String },
-    delayStatus: { type: Boolean },
-    delayTime: { type: Number },
-
+    companyName: { type: Schema.Types.ObjectId },
+    tripId: { type: String },
+    startDate: { type: String },
+    pickupTime: { type: String },
+    deliveryStatus: { type: String, enum: ["upcoming", "Ongoing trips", "delivered"] },
+    consignorName: { type: String },
     managerName: { type: String },
     managerNumber: { type: String },
-    pickupTime: { type: Date },
-    startDate: { type: Date },
-    cronCompletedTime: { type: Date },
-
-    totalDistanceKm: { type: Number },
-    cityName: { type: String },
-
+    costWithoutTax: { type: Number },
+    revenueWithoutTax: { type: Number },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date }
-});
+}, { versionKey: false });
 
 export default mongoose.model(
     "assignevheicles",

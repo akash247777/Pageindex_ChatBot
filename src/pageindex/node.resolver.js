@@ -1,21 +1,21 @@
 export function resolveNodesFromQuestion(question) {
-    const q = question.toLowerCase();
+    const q = question.toLowerCase().replace(/\s+/g, '');
 
-    if (q.includes("vehicle")) {
-        return ["trips.assignment", "vehicle.details"];
+    if (q.includes("driver")) {
+        return ["trips.assigned", "trips.drivers"];
     }
 
-    if (q.includes("trip") || q.includes("delay")) {
-        return ["trips.assignment", "trips.start"];
+    if (q.includes("profile") || q.includes("company") || q.includes("gst") || q.includes("pan") || q.includes("pickuploc") || q.includes("pickloc") || q.includes("pickup") || q.includes("droploc") || q.includes("drop")) {
+        return ["client.profile"];
     }
 
-    if (q.includes("reward")) {
-        return ["driver.rewards"];
+    if (q.includes("wallet") || q.includes("balance")) {
+        return ["client.user"];
     }
 
-    if (q.includes("ticket") || q.includes("complaint")) {
-        return ["support.tickets"];
+    if (q.includes("chat") || q.includes("history") || q.includes("session")) {
+        return ["support.chat", "support.sessions"];
     }
 
-    return ["driver.profile"];
+    return ["client.user"];
 }

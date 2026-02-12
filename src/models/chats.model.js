@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const ChatSchema = new Schema({
+const ClientChatSchema = new Schema({
     sessionId: { type: String, required: true },
+    user: { type: Schema.Types.ObjectId, ref: "users" },
     role: { type: String, enum: ["user", "assistant"], required: true },
     message: { type: String },
-    messageType: { type: String },
     timestamp: { type: Date, default: Date.now }
-});
+}, { versionKey: false });
 
 export default mongoose.model(
-    "chats",
-    ChatSchema,
-    "chats"
+    "ClientChats",
+    ClientChatSchema,
+    "ClientChats"
 );

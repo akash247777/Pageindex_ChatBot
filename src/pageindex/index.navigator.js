@@ -1,19 +1,33 @@
 import { PAGEINDEX_TREE } from "./tree.definition.js";
 
 export function resolveRelevantNodes(userQuery) {
-    const q = userQuery.toLowerCase();
+    const q = userQuery.toLowerCase().replace(/\s+/g, '');
 
-    if (q.includes("delay") || q.includes("trip") || q.includes("manager")) {
-        return ["trips.assignment", "trips.start"];
+    // Profile / company / account
+    if (q.includes("profile") || q.includes("company") || q.includes("gst") || q.includes("pan") || q.includes("address") || q.includes("accountant") || q.includes("pickuploc") || q.includes("pickloc") || q.includes("pickup") || q.includes("droploc") || q.includes("drop") || q.includes("brand")) {
+        return ["client.profile"];
     }
 
-    if (q.includes("reward")) {
-        return ["driver.rewards"];
+    // Driver related (newly restored)
+    if (q.includes("driver")) {
+        return ["trips.assigned", "trips.drivers"];
     }
 
-    if (q.includes("ticket")) {
-        return ["support.tickets"];
+    // Wallet / balance
+    if (q.includes("wallet") || q.includes("balance")) {
+        return ["client.user"];
     }
 
-    return ["driver.profile"];
+    // Chat history
+    if (q.includes("chat") || q.includes("history") || q.includes("previous conversation")) {
+        return ["support.chat"];
+    }
+
+    // Session info
+    if (q.includes("session") || q.includes("login")) {
+        return ["support.sessions"];
+    }
+
+    // Default: return user profile
+    return ["client.user"];
 }

@@ -11,7 +11,7 @@ const DriverDetailsSchema = new Schema({
     drivingLicense: { type: String },
     drivingLicenseExpiry: { type: Date },
     timestamp: { type: Date, default: Date.now }
-});
+}, { versionKey: false });
 
 export default mongoose.model(
     "driverdetails",
