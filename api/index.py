@@ -47,27 +47,40 @@ from fastapi.responses import HTMLResponse
 async def status():
     return {"message": "FastAPI API for Mobile Bot is active"}
 
+from bson import ObjectId
+
+def to_oid(id_str):
+    try:
+        return ObjectId(id_str) if len(id_str) == 24 else id_str
+    except:
+        return id_str
+
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     nodes = resolve_relevant_nodes(req.message)
     
     context = {}
-    # Basic Context Builder (Simplified for example, can be expanded)
+    oid = to_oid(req.userId)
+
+    # Basic Context Builder (Sync logic with tree.definition.js)
     for node in nodes:
         if node == "client.user":
-            data = await db.users.find_one({"_id": req.userId})
+            data = await db.users.find_one({"_id": oid})
             if data: data["_id"] = str(data["_id"])
             context[node] = data if data else {}
         
         elif node == "client.profile":
-            data = await db.clientprofiles.find_one({"user": req.userId})
-            if data: data["_id"] = str(data["_id"])
+            # In your tree.definition, client.profile queryKey is "user"
+            data = await db.clientprofiles.find_one({"user": oid})
+            if data: 
+                data["_id"] = str(data["_id"])
+                if "user" in data: data["user"] = str(data["user"])
             context[node] = data if data else {}
 
     # Build Prompt
     prompt = f"""
     You are an AI Client Support Assistant for "PageIndex".
-    SCHEMA: clientprofiles (company info), users (wallet/profile), assignevheicles (trips), driverdetails.
+    Your goal is to provide accurate, helpful, and concise answers to clients regarding their profile, account, drivers, and company information.
     
     DATA (JSON):
     {json.dumps(context, indent=2, default=str)}
@@ -75,11 +88,17 @@ async def chat(req: ChatRequest):
     USER QUESTION:
     "{req.message}"
     
-    Answer concisely.
+    GUIDELINES:
+    - If the DATA contains user info like 'name', use it to be personalized.
+    - If the DATA is empty or does not contain the answer, politely tell the client you don't have that information.
+    - Never hallucinate data. Only use what is provided.
+    - Be concise and clear.
     """
     
     try:
-        response = model.generate_content(prompt)
+        # Use a stable model version
+        actual_model = genai.GenerativeModel('gemini-1.5-flash')
+        response = actual_model.generate_content(prompt)
         reply = response.text
     except Exception as e:
         reply = f"I'm sorry, I encountered an error: {str(e)}"
