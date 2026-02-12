@@ -97,7 +97,7 @@ async def chat(req: ChatRequest):
     
     try:
         # Use a stable model version
-        actual_model = genai.GenerativeModel('gemini-1.5-flash')
+        actual_model = genai.GenerativeModel('gemini-2.5-flash')
         response = actual_model.generate_content(prompt)
         reply = response.text
     except Exception as e:
