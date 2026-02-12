@@ -46,12 +46,17 @@ from fastapi.responses import HTMLResponse
 @app.get("/", response_class=HTMLResponse)
 async def root():
     # Load and serve the index.html from the public folder
+    # We use a path relative to this file to ensure it works on Vercel
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    index_path = os.path.join(project_root, "public", "index.html")
+    
     try:
-        with open("public/index.html", "r", encoding="utf-8") as f:
+        with open(index_path, "r", encoding="utf-8") as f:
             content = f.read()
         return HTMLResponse(content=content)
     except FileNotFoundError:
-        return HTMLResponse(content="<h1>Frontend Not Found</h1><p>Please ensure public/index.html exists.</p>", status_code=404)
+        return HTMLResponse(content=f"<h1>Frontend Not Found</h1><p>Search path: {index_path}</p>", status_code=404)
 
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
