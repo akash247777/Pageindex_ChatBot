@@ -43,8 +43,8 @@ def resolve_relevant_nodes(query: str):
 
 from fastapi.responses import HTMLResponse
 
-@app.get("/")
-async def root():
+@app.get("/api/status")
+async def status():
     return {"message": "FastAPI API for Mobile Bot is active"}
 
 @app.post("/api/chat")
