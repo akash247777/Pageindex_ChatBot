@@ -90,8 +90,8 @@ async def chat(req: ChatRequest):
             cursor = db.assignevheicles.find(
                 {"userId": oid},
                 {"tripId": 1, "driverId": 1, "vehicleId": 1, "deliveryStatus": 1, "consignorName": 1}
-            ).limit(20) # Limit to 20 recent records
-            data = await cursor.to_list(length=20)
+            ).limit(100) # Increased limit to see more history
+            data = await cursor.to_list(length=100)
             for item in data:
                 item["_id"] = str(item["_id"])
                 if "userId" in item: item["userId"] = str(item["userId"])
@@ -99,31 +99,37 @@ async def chat(req: ChatRequest):
             context[node] = data
             
         elif node == "trips.drivers":
-            # We need to find drivers associated with the user's assigned vehicles
-            # Try to get them from context if trips.assigned was already processed
-            assigned_trips = context.get("trips.assigned")
-            if not assigned_trips:
-                cursor = db.assignevheicles.find({"userId": oid}, {"driverId": 1}).limit(20)
-                assigned_trips = await cursor.to_list(length=20)
+            # Fetch assignments specifically to get unique driver IDs (up to 100 for better coverage)
+            assigned_cursor = db.assignevheicles.find({"userId": oid}, {"driverId": 1}).limit(100)
+            assigned_docs = await assigned_cursor.to_list(length=100)
             
-            driver_ids = [to_oid(t["driverId"]) for t in assigned_trips if t.get("driverId")]
-            if driver_ids:
+            # Get UNIQUE driver IDs
+            raw_ids = [t.get("driverId") for t in assigned_docs if t.get("driverId")]
+            unique_driver_oids = []
+            seen_ids = set()
+            for rid in raw_ids:
+                rid_str = str(rid)
+                if rid_str not in seen_ids:
+                    unique_driver_oids.append(to_oid(rid_str))
+                    seen_ids.add(rid_str)
+            
+            if unique_driver_oids:
                 # Fields: name, phoneNumber, email, city, address
                 cursor = db.driverdetails.find(
-                    {"_id": {"$in": driver_ids}},
+                    {"_id": {"$in": unique_driver_oids}},
                     {"name": 1, "phoneNumber": 1, "email": 1, "city": 1, "address": 1}
                 )
-                drivers = await cursor.to_list(length=20)
+                drivers = await cursor.to_list(length=100)
                 for d in drivers:
                     d["_id"] = str(d["_id"])
                 context[node] = drivers
             else:
                 context[node] = []
 
-    # Build Prompt
+    # Build Prompt - Syncing strictly with original Node.js guidelines
     prompt = f"""
     You are an AI Client Support Assistant for "PageIndex".
-    Provide accurate and concise answers based ONLY on the DATA provided.
+    Your goal is to provide accurate, helpful, and concise answers to clients regarding their profile, account, drivers, and company information.
     
     DATA (JSON):
     {json.dumps(context, indent=2, default=str)}
@@ -132,9 +138,12 @@ async def chat(req: ChatRequest):
     "{req.message}"
     
     GUIDELINES:
-    - Personalize the response if 'name' is available.
-    - If the DATA is empty, inform the client politely.
-    - Do NOT hallucinate.
+    - Use the provided DATA and HISTORY to answer the client's question.
+    - If a client asks for their driver's name, look through the "trips.drivers" data.
+    - If the DATA is empty or does not contain the answer, politely tell the client you don't have that information.
+    - Do NOT include the client's name or company name (consignor name) in your response.
+    - Never hallucinate data. Only use what is provided.
+    - Be concise and clear. For a list of names, a comma-separated format is often best.
     """
     
     try:
