@@ -41,9 +41,17 @@ def resolve_relevant_nodes(query: str):
         return ["support.chat"]
     return ["client.user"]
 
-@app.get("/")
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "FastAPI Mobile Bot Backend is running"}
+    # Load and serve the index.html from the public folder
+    try:
+        with open("public/index.html", "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Frontend Not Found</h1><p>Please ensure public/index.html exists.</p>", status_code=404)
 
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
