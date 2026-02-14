@@ -38,6 +38,12 @@ This project follows a unique **Structured Data Navigator** approach:
 *   **Database**: 🍃 MongoDB Atlas
 
 ---
+## Demo Video
+
+
+https://github.com/user-attachments/assets/aae727ef-14d0-4622-b5c3-8a551406a0c2
+
+
 
 ## 📂 Project Structure
 
@@ -89,4 +95,5 @@ The bot's behavior is controlled via `src/prompts/system.prompt.txt`. You can up
 ---
 
 ### Developed with ❤️ for PageIndex Logistics.
+
 
