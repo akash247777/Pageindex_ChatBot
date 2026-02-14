@@ -6,11 +6,23 @@ import os
 import json
 from datetime import datetime
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
 
 # Load environment variables
 load_dotenv()
 
 app = FastAPI()
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_index():
+    # Helper to serve index.html locally at root
+    try:
+        with open("public/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        return HTMLResponse(content=f"Frontend local server error: {e}")
 
 # MongoDB Connection
 MONGO_URI = os.getenv("MONGO_URI")
@@ -148,20 +160,31 @@ async def chat(req: ChatRequest):
     
     try:
         # Note: gemini-2.5 does not exist yet; using the latest stable 1.5-flash
-        actual_model = genai.GenerativeModel('gemini-1.5-flash')
+        actual_model = genai.GenerativeModel('gemini-2.5-flash')
         response = actual_model.generate_content(prompt)
         reply = response.text
     except Exception as e:
         reply = f"I'm sorry, I encountered an error: {str(e)}"
 
-    # Save to history
-    await db.ClientChats.insert_one({
+    # Create the chat history entry (both user message and assistant reply)
+    history_entry_user = {
+        "sessionId": req.sessionId,
+        "user": req.userId,
+        "role": "user",
+        "message": req.message,
+        "timestamp": datetime.utcnow()
+    }
+    
+    history_entry_assistant = {
         "sessionId": req.sessionId,
         "user": req.userId,
         "role": "assistant",
         "message": reply,
         "timestamp": datetime.utcnow()
-    })
+    }
+
+    # Save to history (Storing both records)
+    await db.ClientChats.insert_many([history_entry_user, history_entry_assistant])
 
     return {"reply": reply, "nodes": nodes}
 
