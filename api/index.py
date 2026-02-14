@@ -43,7 +43,7 @@ class ChatRequest(BaseModel):
 def resolve_relevant_nodes(query: str):
     q = query.lower().replace(" ", "")
     # Ported from index.navigator.js
-    if any(word in q for word in ["profile", "company", "gst", "pan", "address", "pickup", "drop", "brand"]):
+    if any(word in q for word in ["profile", "company", "gst", "pan", "address", "accountant", "pickuploc", "pickloc", "pickup", "droploc", "drop", "brand"]):
         return ["client.profile"]
     if "driver" in q:
         return ["trips.assigned", "trips.drivers"]
@@ -138,30 +138,34 @@ async def chat(req: ChatRequest):
             else:
                 context[node] = []
 
-    # Build Prompt - Syncing strictly with original Node.js guidelines
-    prompt = f"""
-    You are an AI Client Support Assistant for "PageIndex".
-    Your goal is to provide accurate, helpful, and concise answers to clients regarding their profile, account, drivers, and company information.
-    
-    DATA (JSON):
-    {json.dumps(context, indent=2, default=str)}
-    
-    USER QUESTION:
-    "{req.message}"
-    
-    GUIDELINES:
-    - Use the provided DATA and HISTORY to answer the client's question.
-    - If a client asks for their driver's name, look through the "trips.drivers" data.
-    - If the DATA is empty or does not contain the answer, politely tell the client you don't have that information.
-    - Do NOT include the client's name or company name (consignor name) in your response.
-    - Never hallucinate data. Only use what is provided.
-    - Be concise and clear. For a list of names, a comma-separated format is often best.
-    """
+    # Load System Prompt from file
+    system_prompt = ""
+    try:
+        # Use a path relative to the root to find the prompt file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        prompt_path = os.path.join(project_root, "src", "prompts", "system.prompt.txt")
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            system_prompt = f.read()
+    except Exception as e:
+        print(f"Error loading system prompt: {e}")
+        system_prompt = "You are a helpful assistant."
+
+    # Final combined prompt for Gemini
+    final_prompt = f"""
+{system_prompt}
+
+DATA (JSON):
+{json.dumps(context, indent=2, default=str)}
+
+USER QUESTION:
+"{req.message}"
+"""
     
     try:
         # Note: gemini-2.5 does not exist yet; using the latest stable 1.5-flash
         actual_model = genai.GenerativeModel('gemini-2.5-flash')
-        response = actual_model.generate_content(prompt)
+        response = actual_model.generate_content(final_prompt)
         reply = response.text
     except Exception as e:
         reply = f"I'm sorry, I encountered an error: {str(e)}"
