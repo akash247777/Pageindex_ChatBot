@@ -14,6 +14,10 @@ Welcome to the **PageIndex ChatBot** project! This is a high-performance, AI-dri
 *   **📜 Complete History**: Stores both user queries and assistant responses in MongoDB for full conversation tracking.
 
 ---
+## Flow Diagram
+
+<img width="2474" height="1450" alt="diagram-export-14-2-2026-5_03_41-pm" src="https://github.com/user-attachments/assets/e0e84c96-3fbb-4897-9966-1ed1fe78013e" />
+
 
 ## 🏗️ The "PageIndex" Concept
 
@@ -85,3 +89,4 @@ The bot's behavior is controlled via `src/prompts/system.prompt.txt`. You can up
 ---
 
 ### Developed with ❤️ for PageIndex Logistics.
+
