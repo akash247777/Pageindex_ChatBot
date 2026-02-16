@@ -27,7 +27,7 @@ async def serve_index():
 # MongoDB Connection
 MONGO_URI = os.getenv("MONGO_URI")
 # Extract DB name from URI or use 'test' as default from your .env
-DB_NAME = "test" 
+DB_NAME = "your_DB_name" 
 client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
 
